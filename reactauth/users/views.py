@@ -21,7 +21,6 @@ class NilaiListView(generics.ListCreateAPIView):
 
     def get_queryset(self):
         user = self.request.user
-        # Students see only their own grades; instructors see all
         if hasattr(user, 'role') and user.role == 'student':
             return Nilai.objects.filter(mahasiswa=user)
         return Nilai.objects.all()

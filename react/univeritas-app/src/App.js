@@ -14,12 +14,10 @@ function App() {
   const handleLoginSubmit = async (formData) => {
     try {
       const data = await login(formData.email, formData.password);
-      // Simpan token ke localStorage
       if (data.token) {
         localStorage.setItem("access_token", data.token.access);
         localStorage.setItem("refresh_token", data.token.refresh);
       }
-      // Simpan user data
       setUser({
         email: data.email,
         full_name: data.full_name,
@@ -64,7 +62,6 @@ function App() {
     if (user.role === "student") {
       return <DashboardMahasiswa user={user} onLogout={handleLogout} />;
     } else if (user.role === "instructor") {
-      // Placeholder untuk dashboard instructor
       return <DashboardDosen user={user} onLogout={handleLogout} />;
     } else {
       // Role tidak dikenali

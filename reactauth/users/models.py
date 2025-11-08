@@ -30,7 +30,7 @@ class Nilai (models.Model):
     mahasiswa = models.ForeignKey(
         CustomUser, 
         on_delete=models.CASCADE,
-        limit_choices_to={'role': 'student'}  # Hanya student yang bisa punya nilai
+        limit_choices_to={'role': 'student'}
     )
     matkul = models.CharField(max_length=100)
     nilai = models.FloatField()

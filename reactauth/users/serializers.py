@@ -95,7 +95,6 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         return data
     
 class NilaiSerializer(serializers.ModelSerializer):
-    # Represent mahasiswa as nested object with selected fields
     mahasiswa = serializers.SerializerMethodField()
 
     class Meta:
