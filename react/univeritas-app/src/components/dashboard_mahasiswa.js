@@ -61,7 +61,15 @@ function DashboardMahasiswa({ user, onLogout }) {
       energy_business_technology: "EBT",
       food_business_technology: "FBT",
     };
-    return majorMap[major] || major;
+    if (!major) return "-";
+    const norm = String(major)
+      .toLowerCase()
+      .replace(/[\s\-]+/g, "_");
+    if (majorMap[norm]) return majorMap[norm];
+    if (norm.includes("digital") && norm.includes("business")) return "DBT";
+    if (norm.includes("artificial") && norm.includes("robot")) return "AIR";
+    if (norm.includes("business") && norm.includes("mathematics")) return "BM";
+    return norm.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
   };
 
   return (

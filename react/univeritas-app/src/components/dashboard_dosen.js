@@ -52,18 +52,6 @@ function DashboardDosen({ user, onLogout }) {
     return "E";
   };
 
-  const getMajorAbbreviation = (major) => {
-    const majorMap = {
-      artificial_intelligence_and_robotics: "AIR",
-      business_mathematics: "BM",
-      digital_business_technology: "DBT",
-      product_design_engineering: "PDE",
-      energy_business_technology: "EBT",
-      food_business_technology: "FBT",
-    };
-    return majorMap[major] || major;
-  };
-
   const getStudentName = (mahasiswa) => {
     // mahasiswa may be an object or a string/ID depending on API
     if (!mahasiswa) return "-";
@@ -83,11 +71,10 @@ function DashboardDosen({ user, onLogout }) {
     <div className="dashboard-container">
       <div className="dashboard-header">
         <div className="user-info">
-          <h1>Dashboard Mahasiswa</h1>
+          <h1>Dashboard Dosen</h1>
           <p className="welcome-text">Selamat datang, {user.full_name}</p>
           <div className="user-details">
             <span className="badge">{user.email}</span>
-            <span className="badge">{getMajorAbbreviation(user.major)}</span>
             <span className="badge badge-role">{user.role}</span>
           </div>
         </div>

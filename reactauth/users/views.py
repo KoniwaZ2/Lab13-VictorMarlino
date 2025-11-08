@@ -17,7 +17,7 @@ class CustomTokenObtainPairView(TokenObtainPairView):
 
 class NilaiListView(generics.ListCreateAPIView):
     serializer_class = NilaiSerializer
-    permission_classes = (permissions.IsAuthenticated,)
+    permission_classes = (permissions.AllowAny,)
 
     def get_queryset(self):
         user = self.request.user

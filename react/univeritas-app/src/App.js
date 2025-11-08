@@ -14,6 +14,7 @@ function App() {
   const handleLoginSubmit = async (formData) => {
     try {
       const data = await login(formData.email, formData.password);
+      console.log("Login response:", data);
       if (data.token) {
         localStorage.setItem("access_token", data.token.access);
         localStorage.setItem("refresh_token", data.token.refresh);
