@@ -1,6 +1,7 @@
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+from rest_framework.exceptions import PermissionDenied
 import re
 import users.models as user_models
 
@@ -117,6 +118,7 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         token['full_name'] = user.full_name
         token['role'] = user.role
         token['major'] = user.major
+        token['matkul_diajar'] = getattr(user, 'matkul_diajar', [])
 
         return token
     
@@ -133,16 +135,24 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
             "full_name": self.user.full_name,
             "role": self.user.role,
             "major": self.user.major,
+            "matkul_diajar": getattr(self.user, 'matkul_diajar', []),
             "token": token_data,
         })
         return data
     
 class NilaiSerializer(serializers.ModelSerializer):
-    mahasiswa = serializers.SerializerMethodField()
+    mahasiswa = serializers.SerializerMethodField(read_only=True)
+    mahasiswa_id = serializers.PrimaryKeyRelatedField(
+        queryset=User.objects.filter(role='student'),
+        source='mahasiswa',
+        write_only=True,
+        required=True,
+        help_text="ID mahasiswa yang akan diberi nilai"
+    )
 
     class Meta:
         model = user_models.Nilai
-        fields = ('id', 'mahasiswa', 'matkul', 'nilai')
+        fields = ('id', 'mahasiswa', 'mahasiswa_id', 'matkul', 'nilai')
 
     def get_mahasiswa(self, obj):
         user = obj.mahasiswa
@@ -153,3 +163,34 @@ class NilaiSerializer(serializers.ModelSerializer):
             'major': user.major,
             'role': user.role,
         }
+    
+    def validate(self, attrs):
+        """Validasi bahwa hanya instructor yang bisa input nilai untuk matkul yang diajar"""
+        request = self.context.get('request')
+        
+        # Hanya validasi saat create (bukan update)
+        if not self.instance:
+            if not request or not request.user or not request.user.is_authenticated:
+                raise PermissionDenied('Authentication required.')
+            
+            user = request.user
+            if getattr(user, 'role', None) != 'instructor':
+                raise PermissionDenied('Only instructors can add grades.')
+            
+            # Cek apakah matkul yang diinput ada di matkul_diajar dosen
+            matkul = attrs.get('matkul')
+            matkul_diajar = getattr(user, 'matkul_diajar', []) or []
+            
+            if matkul and matkul not in matkul_diajar:
+                raise serializers.ValidationError({
+                    'matkul': f'You can only add grades for courses you teach: {", ".join(matkul_diajar)}'
+                })
+            
+            # Validasi mahasiswa adalah student
+            mahasiswa = attrs.get('mahasiswa')
+            if mahasiswa and getattr(mahasiswa, 'role', None) != 'student':
+                raise serializers.ValidationError({
+                    'mahasiswa_id': 'Selected user must be a student.'
+                })
+        
+        return attrs

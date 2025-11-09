@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import "./App.css";
 import Login from "./components/Login";
 import Register from "./components/Register";
@@ -10,6 +10,29 @@ import { register } from "./services/register";
 function App() {
   const [user, setUser] = useState(null);
   const [showLogin, setShowLogin] = useState(true);
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+
+  useEffect(() => {
+    const checkExistingAuth = () => {
+      const accessToken = localStorage.getItem("access_token");
+      const storedUser = localStorage.getItem("user_data");
+
+      if (accessToken && storedUser) {
+        try {
+          const userData = JSON.parse(storedUser);
+          setUser(userData);
+        } catch (error) {
+          console.error("Failed to parse stored user data:", error);
+          localStorage.removeItem("access_token");
+          localStorage.removeItem("refresh_token");
+          localStorage.removeItem("user_data");
+        }
+      }
+      setIsCheckingAuth(false);
+    };
+
+    checkExistingAuth();
+  }, []);
 
   const handleLoginSubmit = async (formData) => {
     try {
@@ -19,12 +42,15 @@ function App() {
         localStorage.setItem("access_token", data.token.access);
         localStorage.setItem("refresh_token", data.token.refresh);
       }
-      setUser({
+      const userData = {
         email: data.email,
         full_name: data.full_name,
         role: data.role,
         major: data.major,
-      });
+        matkul_diajar: data.matkul_diajar || [],
+      };
+      localStorage.setItem("user_data", JSON.stringify(userData));
+      setUser(userData);
     } catch (error) {
       alert("Login failed. Please check your credentials.");
     }
@@ -39,19 +65,48 @@ function App() {
         formData.major,
         formData.role,
         formData.password,
-        formData.password_confirmation
+        formData.password_confirmation,
+        formData.matkul_diajar
       );
       setUser(data.user);
       setShowLogin(true);
       alert("Registration successful! You can now log in.");
     } catch (error) {
-      alert("Registration failed. Please check your details.");
+      console.error("Registration error:", error);
+
+      let errorMessage = "Registration failed. ";
+
+      if (error.response && error.response.data) {
+        const errors = error.response.data;
+
+        if (typeof errors === "object") {
+          const errorMessages = Object.entries(errors)
+            .map(([field, messages]) => {
+              const fieldName =
+                field.charAt(0).toUpperCase() +
+                field.slice(1).replace("_", " ");
+              const message = Array.isArray(messages)
+                ? messages.join(", ")
+                : messages;
+              return `${fieldName}: ${message}`;
+            })
+            .join("\n");
+          errorMessage += "\n" + errorMessages;
+        } else {
+          errorMessage += errors.detail || errors.toString();
+        }
+      } else {
+        errorMessage += "Please check your details.";
+      }
+
+      alert(errorMessage);
     }
   };
 
   const handleLogout = () => {
     localStorage.removeItem("access_token");
     localStorage.removeItem("refresh_token");
+    localStorage.removeItem("user_data");
     setUser(null);
     setShowLogin(true);
   };
@@ -78,6 +133,18 @@ function App() {
       );
     }
   };
+
+  // Tampilkan loading sementara cek auth
+  if (isCheckingAuth) {
+    return (
+      <div className="App">
+        <div className="loading-container">
+          <div className="spinner"></div>
+          <p>Memuat...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="App">

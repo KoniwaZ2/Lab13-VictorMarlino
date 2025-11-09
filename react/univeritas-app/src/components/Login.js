@@ -69,23 +69,28 @@ function Login({ onSubmit, onCancel, loginToEdit }) {
         </div>
         <div className="form-actions">
           <button type="submit">Login</button>
-          {onCancel && (
-            <button type="button" onClick={onCancel}>
-              Cancel
-            </button>
-          )}
         </div>
         <div className="form-group">
           Don't have an account?
-          <a
-            href="#"
-            onClick={(e) => {
-              e.preventDefault();
+          <button
+            type="button"
+            onClick={() => {
               if (onCancel) onCancel();
             }}
+            style={{
+              marginLeft: "8px",
+              background: "none",
+              border: "none",
+              color: "#667eea",
+              cursor: "pointer",
+              padding: 0,
+              fontSize: "1rem",
+              textDecoration: "underline",
+            }}
+            aria-label="Register"
           >
             Register here.
-          </a>
+          </button>
         </div>
       </form>
     </div>

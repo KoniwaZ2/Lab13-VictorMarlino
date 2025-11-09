@@ -41,3 +41,19 @@ export const addNilai = async (mahasiswaId, matkul, nilai) => {
     throw error;
   }
 };
+
+// Fungsi untuk mendapatkan daftar mahasiswa
+export const getStudents = async () => {
+  try {
+    const token = localStorage.getItem("access_token");
+    const response = await axios.get(`${API_URL}students/`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Failed to fetch students:", error);
+    throw error;
+  }
+};

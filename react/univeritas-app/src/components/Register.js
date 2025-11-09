@@ -10,6 +10,7 @@ function Register({ onSubmit, onCancel, registerToEdit }) {
     role: "",
     password: "",
     password_confirmation: "",
+    matkul_diajar: "",
   });
   useEffect(() => {
     if (registerToEdit) {
@@ -21,6 +22,7 @@ function Register({ onSubmit, onCancel, registerToEdit }) {
         role: registerToEdit.role || "",
         password: registerToEdit.password || "",
         password_confirmation: registerToEdit.password_confirmation || "",
+        matkul_diajar: registerToEdit.matkul_diajar || "",
       });
     } else {
       setFormData({
@@ -31,6 +33,7 @@ function Register({ onSubmit, onCancel, registerToEdit }) {
         role: "",
         password: "",
         password_confirmation: "",
+        matkul_diajar: "",
       });
     }
     if (emailInputRef.current) {
@@ -40,10 +43,29 @@ function Register({ onSubmit, onCancel, registerToEdit }) {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prevData) => ({
-      ...prevData,
-      [name]: value,
-    }));
+
+    // Auto-detect role berdasarkan email domain
+    if (name === "email") {
+      const email = value.toLowerCase();
+      let autoRole = "";
+
+      if (email.includes("@student.prasetiyamulya.ac.id")) {
+        autoRole = "student";
+      } else if (email.includes("@prasetiyamulya.ac.id")) {
+        autoRole = "instructor";
+      }
+
+      setFormData((prevData) => ({
+        ...prevData,
+        [name]: value,
+        role: autoRole, // Auto-set role
+      }));
+    } else {
+      setFormData((prevData) => ({
+        ...prevData,
+        [name]: value,
+      }));
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -117,13 +139,46 @@ function Register({ onSubmit, onCancel, registerToEdit }) {
             name="role"
             value={formData.role}
             onChange={handleChange}
+            disabled={formData.email !== ""}
             required
+            style={{
+              backgroundColor: formData.email !== "" ? "#f0f0f0" : "white",
+              cursor: formData.email !== "" ? "not-allowed" : "pointer",
+            }}
           >
-            <option value="">Select your role</option>
+            <option value="">
+              {formData.email === ""
+                ? "Masukkan email terlebih dahulu"
+                : "Select your role"}
+            </option>
             <option value="student">Student</option>
             <option value="instructor">Instructor</option>
           </select>
+          {formData.role && (
+            <small style={{ color: "#667eea", fontSize: "0.85rem" }}>
+              Role otomatis terdeteksi dari domain email Anda
+            </small>
+          )}
         </div>
+
+        {formData.role === "instructor" && (
+          <div className="form-group">
+            <label htmlFor="matkul_diajar">Mata Kuliah yang Diajar:</label>
+            <textarea
+              id="matkul_diajar"
+              name="matkul_diajar"
+              value={formData.matkul_diajar}
+              onChange={handleChange}
+              placeholder="Pisahkan dengan koma. Contoh: Database Systems, Web Programming, Data Structures"
+              rows="3"
+              style={{ resize: "vertical" }}
+            />
+            <small style={{ color: "#666", fontSize: "0.85rem" }}>
+              Masukkan nama mata kuliah yang Anda ajar, pisahkan dengan koma
+            </small>
+          </div>
+        )}
+
         <div className="form-group">
           <label htmlFor="password">Password:</label>
           <input
@@ -148,7 +203,7 @@ function Register({ onSubmit, onCancel, registerToEdit }) {
         </div>
         <button type="submit">Register</button>
         <button type="button" onClick={onCancel}>
-          Cancel
+          Back to Login
         </button>
       </form>
     </div>
