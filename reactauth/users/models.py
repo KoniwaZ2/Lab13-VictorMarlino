@@ -19,6 +19,7 @@ class CustomUser(AbstractUser):
     full_name = models.CharField(max_length=100)
     major = models.CharField(max_length=50, choices=MAJOR_CHOICES, blank=True, null=True)
     role = models.CharField(max_length=20, choices=ROLE_CHOISES)
+    matkul_diajar = models.JSONField(default=list, blank=True, help_text="Daftar mata kuliah yang diajar (khusus dosen)")
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['username', 'full_name']

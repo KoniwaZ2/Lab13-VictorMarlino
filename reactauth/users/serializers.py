@@ -9,10 +9,28 @@ User = get_user_model()
 
 class RegisterSerializer(serializers.ModelSerializer):
     password_confirmation = serializers.CharField(write_only=True, required=True, style={'input_type': 'password'})
+    matkul_diajar = serializers.CharField(
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+        style={'base_template': 'textarea.html'},
+        help_text="Daftar mata kuliah yang diajar, pisahkan dengan koma. Contoh: Database Systems, Web Programming"
+    )
+    
+    def to_internal_value(self, data):
+        """
+        Override untuk handle matkul_diajar yang bisa berupa array (dari JSON) 
+        atau string (dari form HTML).
+        """
+        if 'matkul_diajar' in data and isinstance(data['matkul_diajar'], list):
+            data = data.copy()
+            data['matkul_diajar'] = ', '.join(data['matkul_diajar'])
+        
+        return super().to_internal_value(data)
 
     class Meta:
         model = User
-        fields = ('email', 'username', 'full_name', 'major', 'role', 'password', 'password_confirmation')
+        fields = ('email', 'username', 'full_name', 'major', 'role', 'password', 'password_confirmation', 'matkul_diajar')
         extra_kwargs = {
             'password': {'write_only': True, 'style': {'input_type': 'password'}},
             'full_name': {'required': True},
@@ -31,13 +49,39 @@ class RegisterSerializer(serializers.ModelSerializer):
         else:
             raise serializers.ValidationError("Email must be a valid student or instructor email address.")
         
+    def validate_matkul_diajar(self, value):
+        """
+        Parse comma-separated string menjadi list.
+        Mendukung input dari:
+        1. Frontend React (sudah dalam format array dari service)
+        2. DRF browsable API (string comma-separated)
+        """
+        if isinstance(value, list):
+            return value
+        
+        if isinstance(value, str):
+            if not value.strip():
+                return []
+            matkul_list = [m.strip() for m in value.split(',') if m.strip()]
+            return matkul_list
+        
+        return []
+    
     def validate(self, attrs):
         if attrs['password'] != attrs['password_confirmation']:
             raise serializers.ValidationError({"password": "Password fields didn't match."})
+        
+        email = attrs.get('email', '').lower()
+        matkul_diajar = attrs.get('matkul_diajar', [])
+        
+        if '@prasetiyamulya.ac.id' in email and '@student.prasetiyamulya.ac.id' not in email:
+            pass
+        else:
+            attrs['matkul_diajar'] = []
+        
         return attrs
     
     def create(self, validated_data):
-        # Remove password_confirmation from validated_data
         validated_data.pop('password_confirmation', None)
         
         email = validated_data['email'].lower()
@@ -51,7 +95,6 @@ class RegisterSerializer(serializers.ModelSerializer):
         elif domain == 'prasetiyamulya.ac.id':
             role = 'instructor'
 
-        # Use create_user to properly hash the password
         user = User.objects.create_user(
             email=email,
             username=username,
@@ -59,6 +102,7 @@ class RegisterSerializer(serializers.ModelSerializer):
             full_name=validated_data['full_name'],
             major=validated_data.get('major', ''),
             role=role,
+            matkul_diajar=validated_data.get('matkul_diajar', [])
         )
         return user
     
@@ -69,7 +113,6 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     def get_token(cls, user):
         token = super().get_token(user)
 
-        # Add custom claims
         token['email'] = user.email
         token['full_name'] = user.full_name
         token['role'] = user.role

@@ -9,6 +9,7 @@ class CustomUserAdmin(UserAdmin):
     fieldsets = (
         (None, {'fields': ('email', 'password')}),
         ('Personal Info', {'fields': ('full_name', 'major', 'role')}),
+        ('Mata Kuliah (Dosen)', {'fields': ('matkul_diajar',), 'description': 'Khusus untuk dosen - daftar mata kuliah yang diajar'}),
         ('Permissions', {'fields': ('is_staff', 'is_active', 'is_superuser', 'groups', 'user_permissions')}),
         ('Important Dates', {'fields': ('last_login', 'date_joined')}),
     )
@@ -16,7 +17,7 @@ class CustomUserAdmin(UserAdmin):
     add_fieldsets = (
         (None, {
             'classes': ('wide',),
-            'fields': ('email', 'full_name', 'major', 'role', 'password1', 'password2', 'is_staff', 'is_active')}
+            'fields': ('email', 'full_name', 'major', 'role', 'matkul_diajar', 'password1', 'password2', 'is_staff', 'is_active')}
         ),
     )
 

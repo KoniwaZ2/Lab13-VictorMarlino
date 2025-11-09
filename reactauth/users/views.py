@@ -17,10 +17,18 @@ class CustomTokenObtainPairView(TokenObtainPairView):
 
 class NilaiListView(generics.ListCreateAPIView):
     serializer_class = NilaiSerializer
-    permission_classes = (permissions.AllowAny,)
+    permission_classes = (permissions.IsAuthenticated,)
 
     def get_queryset(self):
         user = self.request.user
+        
         if hasattr(user, 'role') and user.role == 'student':
             return Nilai.objects.filter(mahasiswa=user)
-        return Nilai.objects.all()
+        
+        if hasattr(user, 'role') and user.role == 'instructor':
+            matkul_diajar = getattr(user, 'matkul_diajar', [])
+            if matkul_diajar:
+                return Nilai.objects.filter(matkul__in=matkul_diajar)
+            return Nilai.objects.none()
+        
+        return Nilai.objects.none()
